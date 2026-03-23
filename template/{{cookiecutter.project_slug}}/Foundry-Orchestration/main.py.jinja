@@ -1,0 +1,205 @@
+"""
+Main orchestration pipeline for {{ cookiecutter.project_name }}
+
+Manages the full data flow:
+1. Extract data from sources
+2. Transform with SQLMesh
+3. Refresh semantic layer models
+"""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+from typing import Optional
+
+import requests
+from prefect import flow, task, get_run_logger
+from pydantic_settings import BaseSettings
+
+from metricforge.utils import MetricForgeConfig
+
+
+class PipelineConfig(BaseSettings):
+    """Configuration for the pipeline."""
+    config_file: str = "metricforge.yaml"
+    theme: str = "theme1"
+    site: str = "source1"
+    skip_extract: bool = False
+    skip_transform: bool = False
+    skip_cube_refresh: bool = False
+
+
+def _workspace_root() -> Path:
+    """Resolve the workspace root (parent of Foundry-Orchestration/)."""
+    return Path(__file__).resolve().parent.parent
+
+
+def _run(cmd: str, cwd: Optional[Path] = None) -> None:
+    """Run a shell command, raising on failure."""
+    logger = get_run_logger()
+    logger.info("Running: %s", cmd)
+    result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)
+    if result.stdout:
+        logger.info(result.stdout)
+    if result.stderr:
+        logger.warning(result.stderr)
+    result.check_returncode()
+
+
+@task(name="load-config")
+def load_config(config_file: str) -> MetricForgeConfig:
+    """Load MetricForge configuration."""
+    logger = get_run_logger()
+    config = MetricForgeConfig(config_file)
+    logger.info("Loaded config: %s", config.to_dict())
+    return config
+
+
+@task(name="dlt-extract")
+def extract(mfconfig: MetricForgeConfig, theme: str, site: str) -> None:
+    """Run the DLT extract pipeline for the given theme/site."""
+    logger = get_run_logger()
+    root = _workspace_root()
+    
+    # Convention: pipeline script is named {site_snake}_pipeline.py
+    site_snake = site.lower().replace("-", "_")
+    script = (
+        root / "Foundry-Pipelines" / theme / site
+        / "Data-Extract" / f"{site_snake}_pipeline.py"
+    )
+    
+    if not script.exists():
+        logger.warning(f"Extract script not found: {script}")
+        logger.info(f"Expected location: {script}")
+        return
+    
+    _run(f"{sys.executable} {script}", cwd=script.parent)
+
+
+@task(name="sqlmesh-transform")
+def transform(mfconfig: MetricForgeConfig, theme: str, site: str) -> None:
+    """Run SQLMesh plan against the local environment with auto-apply."""
+    logger = get_run_logger()
+    root = _workspace_root()
+    pipeline_path = root / "Foundry-Pipelines" / theme / site / "Data-Pipeline"
+    log_dir = root / "Foundry-Orchestration" / "logs"
+    
+    if not pipeline_path.exists():
+        logger.warning(f"Pipeline path not found: {pipeline_path}")
+        return
+    
+    log_dir.mkdir(exist_ok=True)
+    
+    _run(
+        f"sqlmesh --log-file-dir {log_dir}"
+        f" plan local --auto-apply --no-prompts --skip-tests",
+        cwd=pipeline_path,
+    )
+
+
+@task(name="semantic-refresh")
+def refresh_semantic_layer(mfconfig: MetricForgeConfig) -> None:
+    """
+    Refresh the semantic layer based on configuration.
+    
+    This is provider-specific:
+    - Cube OSS/Cloud: ping meta endpoint to reload schema
+    - Other tools: provider-specific refresh
+    """
+    logger = get_run_logger()
+    semantic_provider = mfconfig.get_semantic_layer_provider()
+    
+    # Only Cube has a refresh endpoint we can ping
+    if semantic_provider.__class__.__name__ not in ['CubeOSSProvider', 'CubeCloudProvider']:
+        logger.info(f"Semantic layer '{semantic_provider.provider_name}' doesn't require manual refresh")
+        return
+    
+    # For Cube providers
+    api_endpoints = semantic_provider.get_api_endpoints()
+    rest_api = api_endpoints.get('rest', 'http://localhost:4000/cubejs-api/v1')
+    
+    try:
+        config_obj = mfconfig.to_dict()
+        
+        api_secret = config_obj.get('semantic_layer', {}).get('config', {}).get('api_secret', 'local-secret')
+        
+        resp = requests.get(
+            f"{rest_api}/meta",
+            headers={"Authorization": api_secret},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        cubes = resp.json().get("cubes", [])
+        logger.info(f"Semantic layer reachable — {len(cubes)} cube(s) loaded: {[c['name'] for c in cubes]}")
+    except requests.ConnectionError:
+        logger.info("Semantic layer not running — skipping refresh")
+    except Exception as exc:
+        logger.warning(f"Semantic layer refresh check failed: {exc}")
+
+
+@flow(name="metricforge-pipeline")
+def main(
+    config_file: str = "metricforge.yaml",
+    theme: str = "theme1",
+    site: str = "source1",
+    skip_extract: bool = False,
+    skip_transform: bool = False,
+    skip_refresh: bool = False,
+) -> None:
+    """
+    Main MetricForge pipeline orchestration.
+    
+    Runs the full data platform pipeline:
+    1. Extract - Load data from sources using DLT
+    2. Transform - Apply transformations using SQLMesh
+    3. Refresh - Update semantic layer with new models
+    
+    Args:
+        config_file: Path to metricforge.yaml config
+        theme: Pipeline theme folder (e.g., 'analytics', 'finance', 'operations')
+        site: Site/source within the theme (e.g., 'database1', 'api_source')
+        skip_extract: Skip DLT extraction
+        skip_transform: Skip SQLMesh transformation
+        skip_refresh: Skip semantic layer refresh
+    """
+    logger = get_run_logger()
+    
+    # Load configuration
+    mfconfig = load_config(config_file)
+    
+    # Run pipeline stages
+    if not skip_extract:
+        logger.info("📥 Starting extraction...")
+        extract(mfconfig, theme, site)
+    
+    if not skip_transform:
+        logger.info("🔄 Starting transformation...")
+        transform(mfconfig, theme, site)
+    
+    if not skip_refresh:
+        logger.info("🎯 Refreshing semantic layer...")
+        refresh_semantic_layer(mfconfig)
+    
+    logger.info("✅ Pipeline complete!")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="MetricForge Pipeline Orchestration")
+    parser.add_argument("--config", default="metricforge.yaml", help="Config file path")
+    parser.add_argument("--theme", default="theme1", help="Pipeline theme folder (e.g., 'analytics')")
+    parser.add_argument("--site", default="source1", help="Site/source within theme (e.g., 'database1')")
+    parser.add_argument("--skip-extract", action="store_true", help="Skip extraction")
+    parser.add_argument("--skip-transform", action="store_true", help="Skip transformation")
+    parser.add_argument("--skip-refresh", action="store_true", help="Skip semantic layer refresh")
+    
+    args = parser.parse_args()
+    
+    main(
+        config_file=args.config,
+        theme=args.theme,
+        site=args.site,
+        skip_extract=args.skip_extract,
+        skip_transform=args.skip_transform,
+        skip_refresh=args.skip_refresh,
+    )

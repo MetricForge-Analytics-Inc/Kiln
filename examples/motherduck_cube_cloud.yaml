@@ -1,0 +1,29 @@
+# Managed Cloud Stack: MotherDuck + Cube Cloud
+# Perfect for: Production, teams wanting managed services
+# Cost: Moderate ($50-500+/month)
+# Setup: 15-30 minutes
+
+project_name: Production-Platform
+organization: MyOrganization
+
+# Cloud-managed DuckDB (MotherDuck) - set MD_TOKEN env var
+data_warehouse:
+  type: motherduck
+  config:
+    database: metricforge_prod
+    # motherduck_token: (use MD_TOKEN environment variable)
+
+# Cloud-managed Cube (Cube Cloud) - set CUBE_CLOUD_TOKEN env var
+semantic_layer:
+  type: cube_cloud
+  config:
+    deploy_id: your-deployment-id
+    api_endpoint: https://api.cubecloudapp.com
+    # api_token: (use CUBE_CLOUD_TOKEN environment variable)
+
+# For managed services, disable local Docker
+include_docker: false
+include_tests: true
+include_cicd: true
+
+python_version: "3.11"

@@ -1,0 +1,33 @@
+# Enterprise Stack: Snowflake + Looker
+# Perfect for: Large organizations, regulated data
+# Cost: Premium ($2+/credit for Snowflake, $70K+/year for Looker)
+# Setup: 1-2 hours
+
+project_name: Enterprise-Platform
+organization: MyOrganization
+
+# Snowflake - set SNOWFLAKE_PASSWORD env var
+data_warehouse:
+  type: snowflake
+  config:
+    account: xy12345.us-east-1  # Replace with your account ID
+    user: datalake_analyst
+    warehouse: COMPUTE_WH
+    database: ANALYTICS
+    schema: PUBLIC
+    # password: (use SNOWFLAKE_PASSWORD environment variable)
+
+# Looker - set LOOKER environment variables
+semantic_layer:
+  type: looker
+  config:
+    instance_url: https://myinstance.cloud.looker.com  # Replace with your instance
+    api_version: "4.0"
+    # client_id: (use LOOKER_CLIENT_ID environment variable)
+    # client_secret: (use LOOKER_CLIENT_SECRET environment variable)
+
+include_docker: false
+include_tests: true
+include_cicd: true
+
+python_version: "3.11"
