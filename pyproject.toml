@@ -1,0 +1,131 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metricforge-crucible"
+version = "0.1.0"
+description = "Modular data platform template with flexible architecture choices"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "MetricForge Analytics Inc", email = "info@metricforge.com"},
+]
+keywords = [
+    "data-platform",
+    "data-warehouse",
+    "semantic-layer",
+    "cube.js",
+    "duckdb",
+    "snowflake",
+    "bigquery",
+    "template",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: System :: Monitoring",
+]
+
+dependencies = [
+    "copier>=9.1.0",
+    "jinja2>=3.1.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0.0",
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+]
+
+providers = [
+    "duckdb>=1.2.0",
+    "motherduck>=0.4.0",
+    "snowflake-connector-python>=3.0.0",
+    "google-cloud-bigquery>=3.13.0",
+]
+
+all = [
+    "metricforge-crucible[dev,docs,providers]",
+]
+
+[project.urls]
+Homepage = "https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible"
+Repository = "https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git"
+Issues = "https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/issues"
+Discussions = "https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/discussions"
+
+[project.scripts]
+metricforge = "metricforge.cli:main"
+
+[tool.setuptools]
+packages = ["metricforge"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+metricforge = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = ["*/migrations/*"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-vv --cov=src/metricforge --cov-report=html --cov-report=term-missing"

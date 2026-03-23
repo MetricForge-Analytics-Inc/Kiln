@@ -1,0 +1,30 @@
+# GCP-Native Stack: BigQuery + Apache Superset
+# Perfect for: GCP environments, serverless, open source BI
+# Cost: Low-moderate (BigQuery pay-per-query, Superset ops cost)
+# Setup: 20-30 minutes
+
+project_name: GCP-Platform
+organization: MyOrganization
+
+# BigQuery - set GOOGLE_APPLICATION_CREDENTIALS env var
+data_warehouse:
+  type: bigquery
+  config:
+    project_id: my-gcp-project-id  # Replace with your GCP project
+    dataset_id: metricforge
+    # credentials_path: ./credentials.json (or use GOOGLE_APPLICATION_CREDENTIALS env var)
+
+# Apache Superset - runs in Docker with Postgres
+semantic_layer:
+  type: superset
+  config:
+    port: 8088
+    admin_username: admin
+    admin_password: CHANGE_ME  # Change this!
+    secret_key: CHANGE_ME  # Change this!
+
+include_docker: true
+include_tests: true
+include_cicd: true
+
+python_version: "3.11"

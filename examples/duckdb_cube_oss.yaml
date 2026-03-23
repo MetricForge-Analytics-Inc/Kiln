@@ -1,0 +1,30 @@
+# Development Stack: DuckDB Local + Cube.js OSS
+# Perfect for: Learning, tutorials, rapid iteration
+# Cost: FREE
+# Setup: < 5 minutes
+
+project_name: Local-Dev-Platform
+organization: MyOrganization
+
+# Everything runs locally on your machine
+data_warehouse:
+  type: duckdb_local
+  config:
+    database_path: ./db/metricforge.duckdb
+
+semantic_layer:
+  type: cube_oss
+  config:
+    port: 4000
+    sql_port: 15432
+    api_secret: CHANGE_ME
+    image: cubejs/cube:v1.3
+
+# Enable Docker, tests, CI/CD for development
+include_docker: true
+include_tests: true
+include_cicd: true
+
+# Development features
+include_llm_agent: false
+python_version: "3.11"
