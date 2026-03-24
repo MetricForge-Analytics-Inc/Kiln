@@ -66,62 +66,44 @@ MetricForge Crucible enables users to generate customized data platforms by choo
 
 ## 🚀 Getting Started
 
-### Option 1: Using Copier CLI (Recommended)
+### Option 1: CLI (Command Line)
 
-Install Copier:
+Install MetricForge Crucible:
 ```bash
-pip install copier
+pip install metricforge-crucible
 ```
 
-Create new project:
+Create a new project:
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git /path/to/new-project
+metricforge init
 ```
 
-Follow the interactive prompts to select:
+Answer the interactive prompts to choose your:
 - Project name
-- Data warehouse provider
-- Semantic layer provider
-- Optional features (testing, CI/CD, LLM agents, etc.)
+- Data warehouse (DuckDB, MotherDuck, Snowflake, BigQuery)
+- Semantic layer (Cube.js, Looker, Metabase, Superset)
 
-### Option 2: Using Web UI (Browser-Based)
+### After Project Creation
 
-For a visual, interactive experience:
+Navigate to your new project and configure it:
 
 ```bash
-# Clone the repository
-git clone https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git
-cd MetricForge-Crucible
-
-# Install dependencies
+cd my-project
 pip install -r requirements.txt
-
-# Start the web UI
-./web_ui.sh
-# or: python web_ui.py
+python Crucible-Orchestration/main.py
 ```
 
-Then open your browser to `http://localhost:8501` and:
-- **Initialize Project** - Visual wizard to create a new project
-- **Configure Project** - Upload and edit YAML configurations
+### Manual Configuration
 
-### Option 3: Fork the Template
-
-Fork this repository and edit configuration files manually:
+For advanced use cases or fine-grained control:
 1. Fork [MetricForge-Crucible](https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible)
 2. Edit `metricforge.yaml` with your choices
 3. Customize pipeline code
 4. Deploy!
 
-## 🌐 Choosing Your Interface
+## 🌐 Usage
 
-| Interface | Best For | Installation |
-|-----------|----------|--------------|
-| **CLI (Copier)** | Automation, scripting, CI/CD | `pip install copier` |
-| **Web UI (Streamlit)** | Visual interaction, exploring options, team collaboration | Built-in, just run `./web_ui.sh` |
-| **Manual Configuration** | Fine-grained control, custom workflows | Fork + edit locally |
-
-All three approaches share the same underlying **provider framework** — choose what works best for your workflow!
+The CLI provides an interactive experience for guided project setup with the underlying **provider framework** handling all connection and configuration details.
 
 ## 📦 Provider Framework
 
@@ -221,8 +203,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 1. Create provider class in `src/metricforge/providers/data_warehouse.py`
 2. Implement `DataWarehouseProvider` interface
 3. Register in `DATA_WAREHOUSE_PROVIDERS` dictionary
-4. Add to copier.yml choices
-5. Create template files for test configurations
+4. Add to CLI choices in `src/metricforge/cli/initialize.py`
+5. Create example configuration in `examples/` directory
 6. Add documentation
 
 ### Adding a New Semantic Layer Provider

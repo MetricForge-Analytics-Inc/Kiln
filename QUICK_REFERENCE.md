@@ -4,32 +4,30 @@
 
 ### Installation
 
-**CLI Method** (Automation-friendly):
 ```bash
-pip install copier
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
-cd my-project
-pip install -r requirements.txt
+pip install metricforge-crucible
 ```
 
-**Web UI Method** (Visual interface):
+### Create New Project
+
+**Interactive CLI**:
 ```bash
-git clone https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git
-cd MetricForge-Crucible
-pip install -r requirements.txt
-./web_ui.sh  # Opens at http://localhost:8501
+metricforge init
 ```
 
 **Run Project**:
 ```bash
-python Foundry-Orchestration/main.py
+cd my-project
+python Crucible-Orchestration/main.py
 ```
 
----### Data Warehouse Options
+---
+
+### Data Warehouse Options
 
 | Option | Type | Setup Time | Cost | Best For |
 |--------|------|-----------|------|----------|
-| **DuckDB Local** | File-based | <1 min | Free | Development, testing |
+| **DuckDB** | File-based | <1 min | Free | Development, testing |
 | **MotherDuck** | Cloud | 10 min | Low ($) | Small teams, managed |
 | **Snowflake** | Enterprise DW | 30 min | High ($$) | Large enterprises |
 | **BigQuery** | Serverless | 20 min | Low-Mid ($) | GCP-native |
@@ -38,7 +36,7 @@ python Foundry-Orchestration/main.py
 
 | Option | Type | Setup Time | Cost | Best For |
 |--------|------|-----------|------|----------|
-| **Cube OSS** | Open-source | <1 min | Free | Development, self-hosted |
+| **Cube** | Open-source | <1 min | Free | Development, self-hosted |
 | **Cube Cloud** | Managed SaaS | 15 min | Low ($) | Managed experience |
 | **Looker** | Enterprise BI | 45 min | High ($$) | Enterprises, deep analytics |
 | **Metabase** | Open-source BI | 5 min | Free | Simple, user-friendly |
@@ -97,6 +95,20 @@ data_warehouse: bigquery
 semantic_layer: superset
 ```
 
+### Project Structure
+
+```
+my-project/
+  ├── Crucible-Pipelines/          # Data extraction & quality
+  ├── Crucible-Orchestration/      # Prefect workflows
+  ├── Crucible-Semantic-Cubes/     # BI model definitions
+  ├── Crucible-Visualization/      # Dashboards & reports
+  ├── Documentation/              # Architecture & guides
+  ├── metricforge.yaml           # Project configuration
+  ├── requirements.txt           # Python dependencies
+  └── .dockerignore             # Docker exclusions
+```
+
 ### Managing Credentials
 
 #### Option 1: Environment Variables (Recommended)
@@ -135,7 +147,7 @@ echo "metricforge.yaml" >> .gitignore
 
 ```bash
 # Run pipeline
-python Foundry-Orchestration/main.py
+python Crucible-Orchestration/main.py
 
 # Start semantic layer services
 docker compose up -d
@@ -160,7 +172,7 @@ docker compose down
 1. **Edit metricforge.yaml** - Add your credentials
 2. **Set environment variables** - For sensitive data
 3. **docker compose up** - Start services (if using Docker-based)
-4. **python main.py** - Run pipeline
+4. **python Crucible-Orchestration/main.py** - Run pipeline
 5. **Visit UI** - Access semantic layer dashboard
 
 ### Semantic Layer URLs (Default Ports)
@@ -225,15 +237,15 @@ my-project/
 ├── metricforge.yaml                 # Your configuration
 ├── requirements.txt                 # Python dependencies
 ├── docker-compose.yaml              # Docker services
-├── Foundry-Orchestration/
+├── Crucible-Orchestration/
 │   └── main.py                      # Pipeline orchestration
-├── Foundry-Pipelines/
+├── Crucible-Pipelines/
 │   └── [Theme]/[Site]/
 │       ├── Data-Extract/            # DLT extraction
 │       └── Data-Pipeline/           # SQLMesh transformation
-├── Foundry-Semantic-Cubes/
+├── Crucible-Semantic-Cubes/
 │   └── models/                      # Semantic models (YAML)
-├── Foundry-Visualization/
+├── Crucible-Visualization/
 │   └── dashboards/                  # BI dashboards
 └── Documentation/
     └── examples/                    # Reference configs
@@ -241,13 +253,13 @@ my-project/
 
 ### Next Steps
 
-1. ✅ Run `copier copy` to generate project
+1. ✅ Run `metricforge init` to create project
 2. ✅ Edit `metricforge.yaml` with your settings
 3. ✅ Run `docker compose up` (if using Docker)
-4. ✅ Run `python Foundry-Orchestration/main.py`
+4. ✅ Run `python Crucible-Orchestration/main.py`
 5. ✅ Visit semantic layer UI
 6. ✅ Create your data pipelines!
 
 ---
 
-**Ready to build? Start here**: Run `pip install copier && copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project` 🚀
+**Ready to build? Start here**: Run `pip install metricforge-crucible && metricforge init` 🚀

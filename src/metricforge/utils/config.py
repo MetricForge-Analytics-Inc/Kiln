@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 import json
 
-from .providers import (
+from metricforge.providers import (
     ConnectionConfig,
     get_data_warehouse_provider,
     get_semantic_layer_provider,

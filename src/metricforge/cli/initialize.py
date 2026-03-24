@@ -1,111 +1,83 @@
-"""
-CLI initialization tool for MetricForge projects.
+"""CLI tool to initialize MetricForge projects locally."""
 
-This is invoked after Copier template generation to complete project setup.
-"""
-
-import argparse
-import sys
+import click
 from pathlib import Path
-from typing import Optional
-
-from metricforge.utils.config import create_default_config, MetricForgeConfig
-from metricforge.utils.init import ProjectInitializer
+from metricforge.utils.project_setup import ProjectInitializer
 
 
-def initialize_project(config_data: dict, project_path: Optional[str] = None) -> bool:
-    """
-    Initialize a new MetricForge project with the given configuration.
-    
-    Args:
-        config_data: Configuration dictionary from copier
-        project_path: Path to create project in (defaults to current directory)
-        
-    Returns:
-        True if initialization was successful
-    """
-    project_path = Path(project_path) if project_path else Path.cwd()
-    
-    print(f"🚀 Initializing MetricForge project: {config_data.get('project_name')}")
-    print(f"📁 Location: {project_path}")
-    
-    # Create project initializer
-    initializer = ProjectInitializer(project_path)
-    
-    # Create directory structure
-    print("📂 Creating directory structure...")
-    initializer.create_directory_structure(config_data)
-    
-    # Create configuration file
-    print("⚙️  Creating configuration file...")
-    initializer.create_config_file(config_data)
-    
-    # Create Docker ignore
-    print("🐳 Creating Docker configuration...")
-    initializer.create_dockerignore()
-    
-    # Create README
-    print("📖 Creating README...")
-    initializer.create_readme(config_data)
-    
-    # Create example configs
-    print("📋 Creating example configurations...")
-    initializer.create_example_configs()
-    
-    print("\n✅ Project initialization complete!")
-    print(f"\nNext steps:")
-    print(f"  1. cd {project_path}")
-    print(f"  2. Edit metricforge.yaml with your credentials")
-    print(f"  3. pip install -r requirements.txt")
-    print(f"  4. python Foundry-Orchestration/main.py")
-    
-    return True
+DATA_WAREHOUSES = {
+    'duckdb': 'DuckDB (Local/embedabble FOSS file-based OLAP database)',
+    'motherduck': 'MotherDuck (Managed cloud-based duckdb)',
+    'snowflake': 'Snowflake (Enterprise cloud data warehouse)',
+    'bigquery': 'BigQuery (Google Cloud data warehouse)',
+}
+
+SEMANTIC_LAYERS = {
+    'cube': 'Cube.js OSS (Local/embedabble FOSS semantic layer)',
+    'cube-cloud': 'Cube Cloud (Managed cloud-based cube SaaS)',
+    'looker': 'Looker (Google Cloud BI tool)',
+    'metabase': 'Metabase (Open source BI tool)',
+    'superset': 'Superset (Open source BI tool)',
+}
 
 
-def main():
-    """Main entry point for CLI initialization."""
-    parser = argparse.ArgumentParser(
-        description="MetricForge Project Initializer"
-    )
-    parser.add_argument(
-        "--config",
-        type=str,
-        help="Path to copier configuration (JSON format)",
-    )
-    parser.add_argument(
-        "--project-path",
-        type=str,
-        default=".",
-        help="Path where to create the project",
-    )
+@click.command()
+@click.option('--name', prompt='Project name', help='Name for your project')
+@click.option('--dw', type=click.Choice(list(DATA_WAREHOUSES.keys())), 
+              prompt='Data warehouse', help='Choose data warehouse')
+@click.option('--sl', type=click.Choice(list(SEMANTIC_LAYERS.keys())), 
+              prompt='Semantic layer', help='Choose semantic layer')
+@click.option('--path', default='.', help='Directory to create project in')
+def init(name: str, dw: str, sl: str, path: str) -> None:
+    """Initialize a new MetricForge data platform project."""
     
-    args = parser.parse_args()
+    project_path = Path(path) / name
     
-    # Parse configuration
-    if args.config:
-        import json
-        with open(args.config, 'r') as f:
-            config_data = json.load(f)
-    else:
-        # Use defaults for testing
-        config_data = {
-            "project_name": "MetricForge-Project",
-            "project_slug": "metricforge_project",
-            "organization_name": "MyOrganization",
-            "data_warehouse_type": "duckdb_local",
-            "semantic_layer_type": "cube_oss",
-            "include_docker": True,
-            "include_tests": True,
-            "include_cicd": True,
-        }
+    click.echo(f"🚀 Creating MetricForge project: {name}")
+    click.echo(f"   Data Warehouse: {DATA_WAREHOUSES[dw]}")
+    click.echo(f"   Semantic Layer: {SEMANTIC_LAYERS[sl]}")
+    click.echo(f"   Location: {project_path}")
+    
+    config_data = {
+        'project_name': name,
+        'project_slug': name.lower().replace(' ', '_').replace('-', '_'),
+        'organization_name': name,
+        'data_warehouse_type': f'duckdb_local' if dw == 'duckdb' else dw,
+        'semantic_layer_type': f'cube_oss' if sl == 'cube' else sl,
+        'include_docker': True,
+        'include_tests': True,
+        'include_cicd': True,
+    }
     
     try:
-        success = initialize_project(config_data, args.project_path)
-        sys.exit(0 if success else 1)
+        initializer = ProjectInitializer(project_path)
+        
+        click.echo("📂 Creating directory structure...")
+        initializer.create_directory_structure(config_data)
+        
+        click.echo("⚙️  Creating configuration file...")
+        initializer.create_config_file(config_data)
+        
+        click.echo("🐳 Creating Docker configuration...")
+        initializer.create_dockerignore()
+        
+        click.echo("📖 Creating README...")
+        initializer.create_readme(config_data)
+        
+        click.echo("📋 Creating example configurations...")
+        initializer.create_example_configs()
+        
+        click.echo("\n✅ Project initialized successfully!")
+        click.echo(f"\nNext steps:")
+        click.echo(f"  1. cd {project_path}")
+        click.echo(f"  2. Edit metricforge.yaml with your credentials")
+        click.echo(f"  3. pip install -r requirements.txt")
+        click.echo(f"  4. python Crucible-Orchestration/main.py")
+        
     except Exception as e:
-        print(f"❌ Initialization failed: {e}", file=sys.stderr)
-        sys.exit(1)
+        click.echo(f"❌ Failed to initialize project: {e}", err=True)
+        raise click.Abort()
 
 
 if __name__ == "__main__":
-    main()
+    init()
