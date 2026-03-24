@@ -1,184 +1,91 @@
 # Installation & Setup Guide
 
-Quick start guide for MetricForge Crucible.
+Complete setup guide for MetricForge Crucible.
 
 ## Prerequisites
 
 - **Python 3.11+** - Check: `python --version`
-- **Git** - Check: `git --version`
-- **Docker Desktop** (optional, needed for local services) - Check: `docker --version`
 - **pip** (comes with Python)
+- **Docker Desktop** (optional, for containerized services)
 
-## Method 1: Using Copier CLI (Recommended)
-
-This is the easiest way to get started.
-
-### 1. Install Copier
+## Step 1: Install MetricForge Crucible
 
 ```bash
-pip install copier
+pip install metricforge-crucible
 ```
 
-### 2. Create New Project
+## Step 2: Create Your First Project
+
+Run the interactive CLI to create a new project:
 
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git /path/to/my-project
+metricforge init
 ```
 
-### 3. Answer Interactive Questions
+Answer the prompts:
+- **Project name**: e.g., `my-analytics-platform`
+- **Data warehouse**: duckdb | motherduck | snowflake | bigquery
+- **Semantic layer**: cube | cube-cloud | looker | metabase | superset
 
-The tool will ask you:
-- Project name
-- Data warehouse (DuckDB local, MotherDuck, Snowflake, BigQuery)
-- Semantic layer (Cube OSS, Cube Cloud, Looker, Metabase, Superset)
-- Additional features
+## Step 3: Configure Your Project
 
-### 4. Navigate and Install
+Navigate to your new project:
 
 ```bash
-cd /path/to/my-project
-pip install -r requirements.txt
+cd my-analytics-platform
 ```
 
-### 5. Configure
-
-Edit `metricforge.yaml` with your specific settings:
-
-```bash
-nano metricforge.yaml  # or use your editor
-```
-
-### 6. Run!
-
-```bash
-python Foundry-Orchestration/main.py
-```
-
-## Method 2: Using Web UI (Browser-Based) 🌐
-
-For a visual, interactive interface:
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git
-cd MetricForge-Crucible
-```
-
-### 2. Install Dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Launch Web UI
+Edit the configuration file with your provider credentials:
 
 ```bash
-./web_ui.sh
-# or: python web_ui.py
+nano metricforge.yaml
 ```
 
-The web UI will open automatically at **http://localhost:8501**
+Key sections to configure:
+- **data_warehouse.config** - Database credentials/endpoints
+- **semantic_layer.config** - BI tool settings and credentials
 
-### 4. Initialize or Configure Project
+## Step 4: Run Your Platform
 
-**Initialize**: Use the "Initialize Project" tab to create a new data platform
-**Configure**: Use the "Configure Project" tab to edit existing YAML configurations
-
-### 5. Next Steps
-
-Once you've created a project:
-```bash
-cd <your-project-slug>
-pip install -r requirements.txt
-python Foundry-Orchestration/main.py
-```
-
-## Method 3: Fork and Customize
-
-For more control, fork the template and customize manually.
-
-### 1. Fork Repository
-
-- Go to https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible
-- Click "Fork" button
-- Clone your fork: `git clone https://github.com/YOUR_USERNAME/MetricForge-Crucible.git`
-
-### 2. Choose Template Files
-
-Copy an example configuration from `examples/`:
+### Start the orchestration engine:
 
 ```bash
-cp examples/duckdb_cube_oss.yaml metricforge.yaml
-# or
-cp examples/motherduck_cube_cloud.yaml metricforge.yaml
+python Crucible-Orchestration/main.py
 ```
 
-### 3. Customize
+### Access your semantic layer
 
-Edit files for your needs:
-- `metricforge.yaml` - Configuration
-- `Foundry-Pipelines/` - Data extraction and transformation
-- `Foundry-Semantic-Cubes/` - Semantic models
+The URL depends on your chosen platform:
+- **Cube OSS**: http://localhost:4000
+- **Metabase**: http://localhost:3000
+- **Superset**: http://localhost:8088
+- **Looker**: Managed by Google Cloud
+- **Cube Cloud**: Managed SaaS
 
-### 4. Installation
+See your project's `README.md` for specific instructions.
 
-```bash
-pip install -r requirements.txt
-```
+## Additional Resources
 
-## Method 2: Fork and Customize
-
-For more control, fork the template and customize manually.
-
-Verify everything is working:
-
-```python
-python -c "
-from metricforge.utils import MetricForgeConfig
-
-config = MetricForgeConfig()
-dw = config.get_data_warehouse_provider()
-
-print('✓ Data Warehouse:', dw.provider_name)
-if dw.validate_connection():
-    print('✓ Connection successful')
-else:
-    print('✗ Connection failed - check metricforge.yaml')
-"
-```
-
-## Next Steps
-
-1. **Edit Configuration**
-   - `metricforge.yaml` with credentials
-   - Set environment variables for sensitive data
-
-2. **Start Services**
-   ```bash
-   docker compose up -d  # If using Docker-based services
-   ```
-
-3. **Run Pipeline**
-   ```bash
-   python Foundry-Orchestration/main.py
-   ```
-
-4. **Access UI**
-   - Cube OSS: http://localhost:4000
-   - Metabase: http://localhost:3000
-   - Superset: http://localhost:8088
+- **Configuration Details**: See `CONFIGURATION.md` in `/docs`
+- **Provider-Specific Setup**: See `PROVIDER_DEVELOPMENT.md` in `/docs`
+- **Example Projects**: Check `/examples` directory
 
 ## Troubleshooting
 
-### Python Version
+### Python Version Issues
 
 ```bash
 python --version  # Should be 3.11+
 
 # If using multiple versions:
-python3.11 -m pip install copier
-python3.11 -c "from copier import run_copy; ..."
+python3.11 -m pip install --upgrade pip
+python3.11 -m pip install metricforge-crucible
 ```
 
 ### Missing Dependencies
@@ -226,7 +133,7 @@ Using M1/M2 (ARM64):
 ```bash
 # Some packages may need to be installed from conda
 brew install python@3.11
-python3.11 -m pip install -r requirements.txt
+python3.11 -m pip install metricforge-crucible
 ```
 
 ### Windows
@@ -238,8 +145,8 @@ python -m venv venv
 .\venv\Scripts\Activate.ps1
 
 # Install
-pip install copier
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git C:\path\to\project
+pip install metricforge-crucible
+metricforge init
 ```
 
 ### Linux (Ubuntu/Debian)
@@ -255,7 +162,7 @@ source venv/bin/activate
 
 # Install dependencies
 pip install --upgrade pip
-pip install copier
+pip install metricforge-crucible
 ```
 
 ## Getting Help

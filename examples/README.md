@@ -12,21 +12,20 @@ Best for: Learning, testing, rapid prototyping, tutorials
 Stack:
 - DuckDB (local file)
 - Cube.js OSS (Docker)
-- Docker Compose
 
 Cost: Free
 Setup Time: < 5 minutes
 
+Create project:
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
-# Choose: duckdb_local + cube_oss
+metricforge init --name my-project --dw duckdb --sl cube
 ```
 
-Then test:
+Then run:
 ```bash
 cd my-project
 docker compose up -d
-python Foundry-Orchestration/main.py
+python Crucible-Orchestration/main.py
 # Visit http://localhost:4000
 ```
 
@@ -42,9 +41,9 @@ Stack:
 Cost: Moderate ($50-500+/month)
 Setup Time: 15-30 minutes
 
+Create project:
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
-# Choose: motherduck + cube_cloud
+metricforge init --name my-project --dw motherduck --sl cube-cloud
 ```
 
 Configuration:
@@ -52,7 +51,7 @@ Configuration:
 export MD_TOKEN="your_motherduck_token"
 export CUBE_CLOUD_TOKEN="your_cube_token"
 
-python Foundry-Orchestration/main.py
+python Crucible-Orchestration/main.py
 ```
 
 ### Enterprise Stack: Snowflake + Looker
@@ -67,9 +66,9 @@ Stack:
 Cost: Premium (Snowflake: $2+/credit, Looker: $70K+/year)
 Setup Time: 1-2 hours
 
+Create project:
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
-# Choose: snowflake + looker
+metricforge init --name my-project --dw snowflake --sl looker
 ```
 
 ### GCP-Native Stack: BigQuery + Superset
@@ -84,13 +83,13 @@ Stack:
 Cost: Low to moderate (BQ pay-per-query, Superset operational cost)
 Setup Time: 20-30 minutes
 
+Create project:
 ```bash
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
-# Choose: bigquery + superset
+metricforge init --name my-project --dw bigquery --sl superset
 
 export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 docker compose up -d
-python Foundry-Orchestration/main.py
+python Crucible-Orchestration/main.py
 # Visit http://localhost:8088
 ```
 
@@ -98,24 +97,19 @@ python Foundry-Orchestration/main.py
 
 ## Using These Examples
 
-### Method 1: Copy and Modify
+### Method 1: Quick Start with CLI
 
-1. Pick the example closest to your use case
-2. Copy its configuration
-3. Customize for your environment
-4. Follow setup steps
+1. Use the example name to guide your choices during `metricforge init`
+2. Follow the setup steps provided in each example
+3. Customize `metricforge.yaml` for your environment
 
-### Method 2: Reference During Setup
+### Method 2: Copy Configuration Directly
 
-When running `copier copy`, the interactive prompts will guide you through choices similar to these examples.
-
-### Method 3: Post-Generation Customization
-
-After generating a project, replace `metricforge.yaml` with an example configuration and fill in your credentials:
+After generating a project, replace its `metricforge.yaml` with an example configuration:
 
 ```bash
-# Generate project with default config
-copier copy https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible.git my-project
+# Generate project with defaults
+metricforge init --name my-project --dw duckdb --sl cube
 
 # Overwrite with example
 cp examples/motherduck_cube_cloud.yaml my-project/metricforge.yaml

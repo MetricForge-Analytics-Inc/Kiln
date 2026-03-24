@@ -17,10 +17,10 @@ class ProjectInitializer:
         """Create the directory structure for a MetricForge project."""
         directories = [
             'db',
-            'Foundry-Pipelines',
-            'Foundry-Orchestration',
-            'Foundry-Semantic-Cubes',
-            'Foundry-Visualization',
+            'Crucible-Pipelines',
+            'Crucible-Orchestration',
+            'Crucible-Semantic-Cubes',
+            'Crucible-Visualization',
             'Documentation',
             '.github/workflows',
             '.sqlmesh',
@@ -198,13 +198,13 @@ class ProjectInitializer:
             ### 3. Run the pipeline
             
             ```bash
-            python Foundry-Orchestration/main.py
+            python Crucible-Orchestration/main.py
             ```
             
             ### 4. Start the semantic layer
             
             ```bash
-            cd Foundry-Semantic-Cubes
+            cd Crucible-Semantic-Cubes
             docker compose up -d
             ```
             
@@ -212,10 +212,10 @@ class ProjectInitializer:
             
             ## Project Structure
             
-            - `Foundry-Pipelines/` - Data extraction, transformation, and quality
-            - `Foundry-Orchestration/` - Pipeline orchestration (Prefect)
-            - `Foundry-Semantic-Cubes/` - Semantic layer configuration and models
-            - `Foundry-Visualization/` - BI dashboards and reports
+            - `Crucible-Pipelines/` - Data extraction, transformation, and quality
+            - `Crucible-Orchestration/` - Pipeline orchestration (Prefect)
+            - `Crucible-Semantic-Cubes/` - Semantic layer configuration and models
+            - `Crucible-Visualization/` - BI dashboards and reports
             - `Documentation/` - Architecture, design decisions, and runbooks
             
             ## Documentation

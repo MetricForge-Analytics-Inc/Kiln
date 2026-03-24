@@ -1,5 +1,21 @@
 """MetricForge CLI tools."""
 
-from .initialize import initialize_project, main
+import click
+from .initialize import init
 
-__all__ = ["initialize_project", "main"]
+
+@click.group()
+def cli():
+    """MetricForge - Generate and manage data platforms."""
+    pass
+
+
+cli.add_command(init, name='init')
+
+
+def main():
+    """Main entry point for metricforge CLI."""
+    cli()
+
+
+__all__ = ["cli", "main", "init"]
