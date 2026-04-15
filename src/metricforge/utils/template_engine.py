@@ -19,13 +19,6 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
 # ── mapping tables ────────────────────────────────────────────────
 
-_EVIDENCE_DATASOURCE = {
-    "duckdb_local": "@evidence-dev/duckdb",
-    "motherduck": "@evidence-dev/motherduck",
-    "snowflake": "@evidence-dev/snowflake",
-    "bigquery": "@evidence-dev/bigquery",
-}
-
 DW_TYPE_MAP = {
     "duckdb": "duckdb_local",
     "motherduck": "motherduck",
@@ -56,6 +49,8 @@ _CRUCIBLE_STATIC: List[Tuple[str, str]] = [
     ("Visualization/dev.sh", "Visualization/dev.sh"),
     ("Visualization/degit.json", "Visualization/degit.json"),
     ("Visualization/requirements.txt", "Visualization/requirements.txt"),
+    ("Visualization/package.json", "Visualization/package.json"),
+    ("Visualization/evidence.config.yaml", "Visualization/evidence.config.yaml"),
     ("Visualization/pages", "Visualization/pages"),
     ("Visualization/sources", "Visualization/sources"),
     ("Visualization/components", "Visualization/components"),
@@ -142,7 +137,6 @@ def build_context(config: Dict[str, Any]) -> Dict[str, Any]:
         "sales_software": sales_software,
         "has_support": support_software is not None,
         "has_sales": sales_software is not None,
-        "evidence_datasource": _EVIDENCE_DATASOURCE.get(dw_type, "@evidence-dev/duckdb"),
         "cube_api_secret": secrets.token_urlsafe(32),
         "kiln_version": _get_kiln_version(),
     }
