@@ -32,7 +32,7 @@ Then:
 cd my-platform
 cp .env.example .env      # fill in credentials
 docker compose up -d
-python Orchestration/Support-Main.py
+python Orchestration/Main.py
 ```
 
 ## CLI Commands

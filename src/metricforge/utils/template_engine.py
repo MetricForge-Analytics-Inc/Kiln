@@ -43,6 +43,7 @@ _CRUCIBLE_STATIC: List[Tuple[str, str]] = [
     ("Orchestration/entrypoint.sh", "Orchestration/entrypoint.sh"),
     ("Orchestration/requirements.txt", "Orchestration/requirements.txt"),
     ("Orchestration/trigger.py", "Orchestration/trigger.py"),
+    ("Orchestration/Main.py", "Orchestration/Main.py"),
     # Visualization
     ("Visualization/Dockerfile", "Visualization/Dockerfile"),
     ("Visualization/entrypoint.sh", "Visualization/entrypoint.sh"),

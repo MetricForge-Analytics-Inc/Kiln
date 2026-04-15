@@ -256,7 +256,7 @@ def add_pipeline(project_name: str, req: AddPipelineRequest):
         raise HTTPException(status_code=404, detail="Project not found or not initialized")
 
     from metricforge.utils.config import MetricForgeConfig
-    from metricforge.utils.template_engine import render_template, _CRUCIBLE_PIPELINES
+    from metricforge.utils.template_engine import _CRUCIBLE_PIPELINES
 
     cfg = MetricForgeConfig(str(project_path / "metricforge.yaml"))
     existing = cfg.get_pipelines()
@@ -288,13 +288,6 @@ def add_pipeline(project_name: str, req: AddPipelineRequest):
     dw_type = full_config.get("data_warehouse", {}).get("type", "")
     if dw_type:
         _parameterize_dlt_destination(project_path, dw_type)
-
-    # Re-render orchestration
-    context = context_from_project_config(full_config)
-    orch_content = render_template("Orchestration/Support-Main.py.j2", context)
-    orch_path = project_path / "Orchestration" / "Support-Main.py"
-    orch_path.parent.mkdir(parents=True, exist_ok=True)
-    orch_path.write_text(orch_content, encoding="utf-8")
 
     return {"status": "added", "area": req.area, "software": req.software}
 

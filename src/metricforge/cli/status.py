@@ -37,7 +37,7 @@ def status(path: str, as_json: bool) -> None:
     report["checks"]["metricforge_yaml"] = config_file.exists()
     report["checks"]["docker_compose"] = (project_path / "docker-compose.yml").exists()
     report["checks"]["env_file"] = (project_path / ".env").exists()
-    report["checks"]["orchestration"] = (project_path / "Orchestration" / "Support-Main.py").exists()
+    report["checks"]["orchestration"] = (project_path / "Orchestration" / "Main.py").exists()
     report["checks"]["visualization"] = (project_path / "Visualization" / "package.json").exists()
 
     # Docker service status

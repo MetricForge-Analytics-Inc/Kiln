@@ -5,9 +5,8 @@ import click
 from pathlib import Path
 from metricforge.utils.config import MetricForgeConfig
 from metricforge.utils.template_engine import (
-    render_template, _CRUCIBLE_PIPELINES,
+    _CRUCIBLE_PIPELINES,
     _replace_foundry_refs, _parameterize_dlt_destination,
-    context_from_project_config,
 )
 from metricforge.cli.initialize import _find_crucible
 
@@ -71,15 +70,6 @@ def add_pipeline(area: str, software: str, path: str, crucible: str | None) -> N
     if dw_type:
         _parameterize_dlt_destination(project_path, dw_type)
 
-    # Re-render orchestration script with updated pipeline list
-    context = context_from_project_config(cfg.to_dict())
-
-    orch_content = render_template('Orchestration/Support-Main.py.j2', context)
-    orch_path = project_path / 'Orchestration' / 'Support-Main.py'
-    orch_path.parent.mkdir(parents=True, exist_ok=True)
-    orch_path.write_text(orch_content, encoding='utf-8')
-
     click.echo(f"   Added {area} pipeline using {software}")
     click.echo(f"   Directory: Pipeline-Casts/{area_title}/{software}/")
-    click.echo(f"   Updated: Orchestration/Support-Main.py")
     click.echo(f"   Config updated: metricforge.yaml")

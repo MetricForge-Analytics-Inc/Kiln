@@ -59,7 +59,7 @@ Credentials always go in environment variables or `.env`, never in YAML.
 docker compose up -d
 
 # Run the pipeline
-python Orchestration/Support-Main.py
+python Orchestration/Main.py
 ```
 
 Default service URLs:

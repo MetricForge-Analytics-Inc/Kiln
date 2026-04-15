@@ -76,7 +76,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/creds.json"
 cd my-project
 cp .env.example .env              # edit with real values
 docker compose up -d              # start services
-python Orchestration/Support-Main.py   # run pipeline
+python Orchestration/Main.py   # run pipeline
 ```
 
 ## Default Ports
