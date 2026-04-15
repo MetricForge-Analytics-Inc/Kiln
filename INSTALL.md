@@ -56,7 +56,7 @@ Key sections to configure:
 ### Start the orchestration engine:
 
 ```bash
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 ```
 
 ### Access your semantic layer

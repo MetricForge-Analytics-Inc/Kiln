@@ -18,7 +18,7 @@ metricforge init
 **Run Project**:
 ```bash
 cd my-project
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 ```
 
 ---
@@ -99,10 +99,10 @@ semantic_layer: superset
 
 ```
 my-project/
-  ├── Crucible-Pipelines/          # Data extraction & quality
-  ├── Crucible-Orchestration/      # Prefect workflows
-  ├── Crucible-Semantic-Cubes/     # BI model definitions
-  ├── Crucible-Visualization/      # Dashboards & reports
+  ├── Pipeline-Casts/          # Data extraction & quality
+  ├── Orchestration/      # Prefect workflows
+  ├── Semantic-Cubes/     # BI model definitions
+  ├── Visualization/      # Dashboards & reports
   ├── Documentation/              # Architecture & guides
   ├── metricforge.yaml           # Project configuration
   ├── requirements.txt           # Python dependencies
@@ -147,7 +147,7 @@ echo "metricforge.yaml" >> .gitignore
 
 ```bash
 # Run pipeline
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 
 # Start semantic layer services
 docker compose up -d
@@ -172,7 +172,7 @@ docker compose down
 1. **Edit metricforge.yaml** - Add your credentials
 2. **Set environment variables** - For sensitive data
 3. **docker compose up** - Start services (if using Docker-based)
-4. **python Crucible-Orchestration/main.py** - Run pipeline
+4. **python Orchestration/main.py** - Run pipeline
 5. **Visit UI** - Access semantic layer dashboard
 
 ### Semantic Layer URLs (Default Ports)
@@ -237,15 +237,15 @@ my-project/
 ├── metricforge.yaml                 # Your configuration
 ├── requirements.txt                 # Python dependencies
 ├── docker-compose.yaml              # Docker services
-├── Crucible-Orchestration/
+├── Orchestration/
 │   └── main.py                      # Pipeline orchestration
-├── Crucible-Pipelines/
+├── Pipeline-Casts/
 │   └── [Theme]/[Site]/
 │       ├── Data-Extract/            # DLT extraction
 │       └── Data-Pipeline/           # SQLMesh transformation
-├── Crucible-Semantic-Cubes/
+├── Semantic-Cubes/
 │   └── models/                      # Semantic models (YAML)
-├── Crucible-Visualization/
+├── Visualization/
 │   └── dashboards/                  # BI dashboards
 └── Documentation/
     └── examples/                    # Reference configs
@@ -256,7 +256,7 @@ my-project/
 1. ✅ Run `metricforge init` to create project
 2. ✅ Edit `metricforge.yaml` with your settings
 3. ✅ Run `docker compose up` (if using Docker)
-4. ✅ Run `python Crucible-Orchestration/main.py`
+4. ✅ Run `python Orchestration/main.py`
 5. ✅ Visit semantic layer UI
 6. ✅ Create your data pipelines!
 

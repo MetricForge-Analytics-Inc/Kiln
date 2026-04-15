@@ -90,7 +90,7 @@ Navigate to your new project and configure it:
 ```bash
 cd my-project
 pip install -r requirements.txt
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 ```
 
 ### Manual Configuration

@@ -43,9 +43,15 @@ dependencies = [
     "click>=8.0.0",
     "rich>=13.0.0",
     "requests>=2.31.0",
+    "jinja2>=3.1.0",
 ]
 
 [project.optional-dependencies]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+]
+
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -68,7 +74,7 @@ providers = [
 ]
 
 all = [
-    "metricforge-crucible[dev,docs,providers]",
+    "metricforge-crucible[api,dev,docs,providers]",
 ]
 
 [project.urls]
@@ -81,11 +87,11 @@ Discussions = "https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible
 metricforge = "metricforge.cli:main"
 
 [tool.setuptools]
-packages = ["metricforge"]
+packages = {find = {where = ["src"]}}
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-metricforge = ["py.typed"]
+metricforge = ["py.typed", "templates/**/*", "templates/**/.gitkeep"]
 
 [tool.black]
 line-length = 100

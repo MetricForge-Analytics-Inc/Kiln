@@ -93,6 +93,16 @@ class MetricForgeConfig:
         
         return self.dw_provider
     
+    def get_pipelines(self) -> Dict[str, Any]:
+        """Get pipeline configurations (business area -> software mappings)."""
+        return self.config.get('pipelines', {})
+
+    def add_pipeline(self, area: str, software: str):
+        """Add or update a pipeline for a business area."""
+        if 'pipelines' not in self.config:
+            self.config['pipelines'] = {}
+        self.config['pipelines'][area] = {'software': software}
+
     def get_semantic_layer_provider(self):
         """Get or initialize semantic layer provider."""
         if not self.sl_provider:
@@ -136,6 +146,11 @@ def create_default_config(
         },
         **{k: v for k, v in kwargs.items() if k not in ['organization']},
     }
+    
+    # Add pipelines if provided
+    pipelines = kwargs.get('pipelines')
+    if pipelines:
+        config.config['pipelines'] = pipelines
     
     return config
 

@@ -25,7 +25,7 @@ Then run:
 ```bash
 cd my-project
 docker compose up -d
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 # Visit http://localhost:4000
 ```
 
@@ -51,7 +51,7 @@ Configuration:
 export MD_TOKEN="your_motherduck_token"
 export CUBE_CLOUD_TOKEN="your_cube_token"
 
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 ```
 
 ### Enterprise Stack: Snowflake + Looker
@@ -89,7 +89,7 @@ metricforge init --name my-project --dw bigquery --sl superset
 
 export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 docker compose up -d
-python Crucible-Orchestration/main.py
+python Orchestration/main.py
 # Visit http://localhost:8088
 ```
 

@@ -1,0 +1,92 @@
+name: Pipeline — Build & Deploy
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: {% raw %}${{ github.repository }}{% endraw %}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install flake8
+      - run: flake8 Orchestration/ --max-line-length=120
+
+  build-orchestration:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: {% raw %}${{ env.REGISTRY }}{% endraw %}
+          username: {% raw %}${{ github.actor }}{% endraw %}
+          password: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Orchestration/Dockerfile
+          push: {% raw %}${{ github.event_name == 'push' }}{% endraw %}
+          tags: |
+            {% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/orchestration:latest{% endraw %}
+            {% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/orchestration:${{ github.sha }}{% endraw %}
+
+  build-visualization:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: {% raw %}${{ env.REGISTRY }}{% endraw %}
+          username: {% raw %}${{ github.actor }}{% endraw %}
+          password: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Visualization/Dockerfile
+          push: {% raw %}${{ github.event_name == 'push' }}{% endraw %}
+          tags: |
+            {% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/visualization:latest{% endraw %}
+            {% raw %}${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/visualization:${{ github.sha }}{% endraw %}
+
+  deploy-staging:
+    if: github.ref == 'refs/heads/staging'
+    needs: [build-orchestration, build-visualization]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to staging
+        run: |
+          echo "Deploy to staging — add your deployment commands here"
+          # docker compose -f docker-compose.yml pull
+          # docker compose -f docker-compose.yml up -d
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: [build-orchestration, build-visualization]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to production
+        run: |
+          echo "Deploy to production — add your deployment commands here"
+          # docker compose -f docker-compose.yml pull
+          # docker compose -f docker-compose.yml up -d
