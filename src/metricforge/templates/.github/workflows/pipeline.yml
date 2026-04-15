@@ -21,8 +21,20 @@ jobs:
       - run: pip install flake8
       - run: flake8 Orchestration/ --max-line-length=120
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install pytest pyyaml prefect
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
   build-orchestration:
-    needs: lint
+    needs: [lint, test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,7 +56,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/orchestration:${{ github.sha }}
 
   build-visualization:
-    needs: lint
+    needs: [lint, test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
