@@ -1,234 +1,136 @@
-# MetricForge Crucible - Templated Data Platform
+# MetricForge Kiln
 
-A comprehensive, modular template for building data platforms with flexible architecture choices.
+Lightweight CLI that scaffolds client data platform projects from [Crucible](../Crucible/) — the reference implementation.
 
-## 🎯 Overview
+## How It Works
 
-MetricForge Crucible enables users to generate customized data platforms by choosing from a flexible set of components:
+Kiln does **not** duplicate Crucible's source files. At scaffold time it:
 
-### Data Warehouses
-- **DuckDB** (Local) - Best for development and testing
-- **MotherDuck** - Managed DuckDB in the cloud
-- **Snowflake** - Enterprise cloud data warehouse
-- **BigQuery** - Google Cloud data warehouse
+1. Renders a small set of `.j2` templates (config, docker-compose, env, README, orchestration)
+2. Copies everything else (Dockerfiles, SQL models, pipelines, dashboards) directly from Crucible
+3. Parameterizes the copied files — replaces `Foundry.` references with the client's project slug and sets the correct DLT destination
 
-### Semantic Layers
-- **Cube.js OSS** - Open-source, locally hosted
-- **Cube Cloud** - Managed SaaS by Cube
-- **Looker** - Google Cloud BI platform
-- **Metabase** - Open-source BI tool
-- **Apache Superset** - Open-source BI platform
+The result is a standalone project directory the client can version-control, build, and deploy independently.
 
-### Core Stack (Unified)
-- **Orchestration**: Prefect - workflow orchestration
-- **Transformation**: SQLMesh - SQL transformation framework
-- **Data Loading**: DLT - data load tool
-- **Data Catalog**: Provided by semantic layer
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                  Data Sources                           │
-│        (APIs, Files, Databases, Data Lakes)            │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                    DLT Pipeline
-                    (Extract)
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│          Data Warehouse (User Choice)                   │
-│  ├─ DuckDB (Local)                                      │
-│  ├─ MotherDuck (Cloud)                                  │
-│  ├─ Snowflake                                           │
-│  └─ BigQuery                                            │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                    SQLMesh Models
-                    (Transform)
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│          Semantic Layer (User Choice)                   │
-│  ├─ Cube.js (OSS)                                       │
-│  ├─ Cube Cloud                                          │
-│  ├─ Looker                                             │
-│  ├─ Metabase                                            │
-│  └─ Apache Superset                                     │
-└────────────────────────┬────────────────────────────────┘
-                         │
-           ┌─────────────┴─────────────┐
-           │                           │
-      REST API                    Web UI
-      & SQL API                  Dashboards
-```
-
-## 🚀 Getting Started
-
-### Option 1: CLI (Command Line)
-
-Install MetricForge Crucible:
-```bash
-pip install metricforge-crucible
-```
-
-Create a new project:
-```bash
-metricforge init
-```
-
-Answer the interactive prompts to choose your:
-- Project name
-- Data warehouse (DuckDB, MotherDuck, Snowflake, BigQuery)
-- Semantic layer (Cube.js, Looker, Metabase, Superset)
-
-### After Project Creation
-
-Navigate to your new project and configure it:
+## Quick Start
 
 ```bash
-cd my-project
-pip install -r requirements.txt
-python Orchestration/main.py
+pip install -e .          # from the Kiln directory
+metricforge init          # interactive prompts
 ```
 
-### Manual Configuration
+Or non-interactive:
 
-For advanced use cases or fine-grained control:
-1. Fork [MetricForge-Crucible](https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible)
-2. Edit `metricforge.yaml` with your choices
-3. Customize pipeline code
-4. Deploy!
+```bash
+metricforge init --name my-platform --dw duckdb --sl cube \
+  --support-software zendesk --sales-software salesforce
+```
 
-## 🌐 Usage
+Then:
 
-The CLI provides an interactive experience for guided project setup with the underlying **provider framework** handling all connection and configuration details.
+```bash
+cd my-platform
+cp .env.example .env      # fill in credentials
+docker compose up -d
+python Orchestration/Support-Main.py
+```
 
-## 📦 Provider Framework
+## CLI Commands
 
-MetricForge uses an abstraction layer for providers, making it easy to:
-- Add new data warehouse or BI tool support
-- Switch providers without changing pipeline logic
-- Share configuration across different environments
+| Command | Description |
+|---------|-------------|
+| `metricforge init` | Scaffold a new project |
+| `metricforge add-pipeline` | Add a business area pipeline to an existing project |
+| `metricforge build` | Build Docker images (`docker compose build`) |
+| `metricforge upgrade` | Re-copy Crucible files + re-render templates (preserves `.env` and `metricforge.yaml`) |
+| `metricforge status` | Health check: file presence, Docker services, last pipeline metrics |
+| `metricforge serve` | Start the FastAPI provisioning API |
 
-### Provider Classes
+## Architecture
 
-**DataWarehouseProvider** - Handles:
-- Connection management
-- Environment variable setup
-- Docker service configuration
-- Connection validation
+Kiln is intentionally thin. All domain logic lives in Crucible.
 
-**SemanticLayerProvider** - Handles:
-- Semantic model deployment
-- UI/API endpoint configuration
-- Authentication setup
-- Refresh mechanisms
+```
+Crucible (source of truth)          Kiln (scaffolding tool)
+├── Orchestration/                  ├── templates/          # 7 .j2 files
+├── Pipeline-Casts/                 │   ├── metricforge.yaml.j2
+│   ├── Support/zendesk/            │   ├── docker-compose.yml.j2
+│   ├── Support/salesforce/         │   ├── .env.example.j2
+│   ├── Sales/zendesk/              │   ├── README.md.j2
+│   └── Sales/salesforce/           │   └── ...
+├── Semantic-Cubes/                 ├── cli/                # Click commands
+├── Visualization/                  ├── providers/          # DW + SL abstractions
+└── ...                             ├── utils/              # template engine, config
+                                    └── api.py              # optional FastAPI service
+```
 
-## 🔧 Configuration
+### What lives where
 
-All projects use `metricforge.yaml` for configuration:
+| Concern | Location |
+|---------|----------|
+| Prefect flows, DLT pipelines, SQLMesh models, Cube definitions, Evidence dashboards | **Crucible** — copied at scaffold time |
+| Per-client config (project name, DW type, SL type, feature flags) | **Kiln templates** — rendered at scaffold time |
+| Provider abstractions (connection validation, env vars, Docker services) | **Kiln providers/** |
+| CI/CD workflow | **Kiln templates/.github/** — copied as static file |
+
+## Configuration
+
+Generated projects use `metricforge.yaml`:
 
 ```yaml
-project_name: MyDataPlatform
-organization: MyOrganization
+project_name: my-platform
+organization: MyOrg
 
 data_warehouse:
-  type: duckdb_local
+  type: duckdb_local        # duckdb_local | motherduck | snowflake | bigquery
   config:
     database_path: ./db/metricforge.duckdb
 
 semantic_layer:
-  type: cube_oss
+  type: cube_oss             # cube_oss | cube_cloud | looker | metabase | superset
   config:
     port: 4000
     sql_port: 15432
+
+pipelines:
+  support:
+    software: zendesk        # zendesk | salesforce
+  sales:
+    software: salesforce
 ```
 
-See [Configuration Guide](docs/CONFIGURATION.md) for detailed options for each provider.
+Credentials go in environment variables or `.env` — never in `metricforge.yaml`.
 
-## 📚 Documentation
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for all provider options.
 
-- [Configuration Guide](docs/CONFIGURATION.md) - Detailed provider configuration
-- [Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md) - Why certain choices were made
-- [Provider Development](docs/PROVIDER_DEVELOPMENT.md) - How to add new providers
-- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment patterns
-- [Examples](examples/) - Sample configurations for popular stacks
+## Provisioning API
 
-## 🏆 Popular Configuration Combinations
+For website/automation integration:
 
-### Development Stack
-```
-DuckDB Local + Cube.js OSS
-Perfect for: Learning, testing, rapid prototyping
-Cost: Free
+```bash
+pip install -e ".[api]"
+metricforge serve --port 8000
 ```
 
-### Managed Cloud Stack
-```
-MotherDuck + Cube Cloud
-Perfect for: Teams wanting managed services
-Cost: Moderate
-```
+Endpoints:
+- `POST /projects` — create a project
+- `GET /projects/{name}` — status check
+- `POST /projects/{name}/pipelines` — add a pipeline
+- `POST /projects/{name}/upgrade` — upgrade from latest Crucible
+- `DELETE /projects/{name}` — remove a project
 
-### Enterprise Stack
-```
-Snowflake + Looker
-Perfect for: Large organizations with existing Looker
-Cost: Premium
-```
+## Security
 
-### Open Source Stack
-```
-DuckDB Local + Apache Superset
-Perfect for: Cost-conscious teams wanting open source
-Cost: Free (self-hosted)
-```
+- No hardcoded secrets — API secrets and passwords are generated per-scaffold or read from env vars
+- API path traversal protection on all endpoints
+- Subprocess calls use list args (no `shell=True`)
+- Error responses don't leak filesystem paths
 
-## 🔐 Security Considerations
+## Documentation
 
-- Credentials stored in environment variables or `.env` files
-- Never commit sensitive data to version control
-- Use `.gitignore` to exclude database files and config overrides
-- Support for cloud provider IAM authentication
-- Prefect enables secure workflow execution
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
-
-### Adding a New Data Warehouse Provider
-
-1. Create provider class in `src/metricforge/providers/data_warehouse.py`
-2. Implement `DataWarehouseProvider` interface
-3. Register in `DATA_WAREHOUSE_PROVIDERS` dictionary
-4. Add to CLI choices in `src/metricforge/cli/initialize.py`
-5. Create example configuration in `examples/` directory
-6. Add documentation
-
-### Adding a New Semantic Layer Provider
-
-Same pattern as data warehouse providers, but implement `SemanticLayerProvider` interface.
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) file for details.
-
-## 🙋 Support
-
-- **Issues**: [GitHub Issues](https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/discussions)
-- **Documentation**: [Full Documentation](docs/)
-
-## 🎓 Learning Resources
-
-- [SQLMesh Docs](https://sqlmesh.readthedocs.io/) - SQL transformation framework
-- [DLT Docs](https://dlthub.com/docs) - Data loading and extraction
-- [Cube.js Docs](https://cube.dev/docs/) - Semantic layer & BI
-- [Prefect Docs](https://docs.prefect.io/) - Workflow orchestration
-- [Example Projects](examples/README.md) - Ready-to-use configurations
-
----
-
-**Built with ❤️ by MetricForge Analytics Inc** 
+- [Installation](INSTALL.md)
+- [Quick Reference](QUICK_REFERENCE.md)
+- [Configuration Guide](docs/CONFIGURATION.md)
+- [Provider Development](docs/PROVIDER_DEVELOPMENT.md)
+- [Examples](examples/)
+- [Contributing](CONTRIBUTING.md)

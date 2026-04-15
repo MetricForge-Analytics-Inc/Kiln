@@ -22,12 +22,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from metricforge.utils.template_engine import (
-    build_context,
     scaffold_project,
     DW_TYPE_MAP,
     SL_TYPE_MAP,
     _replace_foundry_refs,
     _parameterize_dlt_destination,
+    context_from_project_config,
 )
 from metricforge.utils.project_setup import ProjectInitializer
 
@@ -290,16 +290,7 @@ def add_pipeline(project_name: str, req: AddPipelineRequest):
         _parameterize_dlt_destination(project_path, dw_type)
 
     # Re-render orchestration
-    context = build_context({
-        "project_name": full_config.get("project_name", "metricforge-project"),
-        "organization": full_config.get("organization", ""),
-        "data_warehouse_type": full_config.get("data_warehouse", {}).get("type", "duckdb_local"),
-        "semantic_layer_type": full_config.get("semantic_layer", {}).get("type", "cube_oss"),
-        "include_docker": full_config.get("include_docker", True),
-        "include_tests": full_config.get("include_tests", True),
-        "include_cicd": full_config.get("include_cicd", True),
-        "pipelines": full_config.get("pipelines", {}),
-    })
+    context = context_from_project_config(full_config)
     orch_content = render_template("Orchestration/Support-Main.py.j2", context)
     orch_path = project_path / "Orchestration" / "Support-Main.py"
     orch_path.parent.mkdir(parents=True, exist_ok=True)
@@ -331,16 +322,7 @@ def upgrade_project(project_name: str):
     env_backup = env_file.read_text(encoding="utf-8") if env_file.exists() else None
     config_backup = config_file.read_text(encoding="utf-8")
 
-    context = build_context({
-        "project_name": full_config.get("project_name", "metricforge-project"),
-        "organization": full_config.get("organization", ""),
-        "data_warehouse_type": full_config.get("data_warehouse", {}).get("type", "duckdb_local"),
-        "semantic_layer_type": full_config.get("semantic_layer", {}).get("type", "cube_oss"),
-        "include_docker": full_config.get("include_docker", True),
-        "include_tests": full_config.get("include_tests", True),
-        "include_cicd": full_config.get("include_cicd", True),
-        "pipelines": full_config.get("pipelines", {}),
-    })
+    context = context_from_project_config(full_config)
 
     scaffold_project(project_path, crucible_path, context)
 

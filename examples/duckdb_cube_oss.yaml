@@ -17,7 +17,7 @@ semantic_layer:
   config:
     port: 4000
     sql_port: 15432
-    api_secret: CHANGE_ME
+    # api_secret: auto-generated at scaffold time
     image: cubejs/cube:v1.3
 
 # Enable Docker, tests, CI/CD for development

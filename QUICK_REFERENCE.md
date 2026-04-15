@@ -1,233 +1,101 @@
-# Quick Reference Card
+# Quick Reference
 
-## MetricForge Crucible - One-Page Reference
-
-### Installation
+## Install
 
 ```bash
-pip install metricforge-crucible
+pip install -e .                     # from Kiln directory
+pip install -e ".[api]"              # with provisioning API
 ```
 
-### Create New Project
+## CLI Commands
 
-**Interactive CLI**:
 ```bash
-metricforge init
+metricforge init                     # interactive scaffold
+metricforge init --name X --dw duckdb --sl cube --support-software zendesk
+metricforge add-pipeline --area sales --software salesforce
+metricforge build                    # docker compose build
+metricforge upgrade                  # re-copy from Crucible
+metricforge upgrade --dry-run        # preview changes
+metricforge status                   # health check
+metricforge status --json-output     # machine-readable
+metricforge serve --port 8000        # start API server
 ```
 
-**Run Project**:
-```bash
-cd my-project
-python Orchestration/main.py
-```
+## Data Warehouse Options
 
----
+| Type | Config key | Cost | Best for |
+|------|-----------|------|----------|
+| DuckDB | `duckdb_local` | Free | Dev/testing |
+| MotherDuck | `motherduck` | $ | Small teams |
+| Snowflake | `snowflake` | $$$ | Enterprise |
+| BigQuery | `bigquery` | $$ | GCP-native |
 
-### Data Warehouse Options
+## Semantic Layer Options
 
-| Option | Type | Setup Time | Cost | Best For |
-|--------|------|-----------|------|----------|
-| **DuckDB** | File-based | <1 min | Free | Development, testing |
-| **MotherDuck** | Cloud | 10 min | Low ($) | Small teams, managed |
-| **Snowflake** | Enterprise DW | 30 min | High ($$) | Large enterprises |
-| **BigQuery** | Serverless | 20 min | Low-Mid ($) | GCP-native |
+| Type | Config key | Cost | Best for |
+|------|-----------|------|----------|
+| Cube OSS | `cube_oss` | Free | Self-hosted |
+| Cube Cloud | `cube_cloud` | $ | Managed |
+| Looker | `looker` | $$$ | Enterprise |
+| Metabase | `metabase` | Free | Simple BI |
+| Superset | `superset` | Free | Dashboards |
 
-### Semantic Layer Options
-
-| Option | Type | Setup Time | Cost | Best For |
-|--------|------|-----------|------|----------|
-| **Cube** | Open-source | <1 min | Free | Development, self-hosted |
-| **Cube Cloud** | Managed SaaS | 15 min | Low ($) | Managed experience |
-| **Looker** | Enterprise BI | 45 min | High ($$) | Enterprises, deep analytics |
-| **Metabase** | Open-source BI | 5 min | Free | Simple, user-friendly |
-| **Superset** | Open-source BI | 10 min | Free | Modern dashboards |
-
-### Configuration File Format
-
-```yaml
-project_name: MyProject
-organization: MyOrg
-
-data_warehouse:
-  type: duckdb_local|motherduck|snowflake|bigquery
-  config:
-    # Provider-specific options
-
-semantic_layer:
-  type: cube_oss|cube_cloud|looker|metabase|superset
-  config:
-    # Provider-specific options
-
-include_docker: true|false
-include_tests: true|false
-include_cicd: true|false
-```
-
-### Popular Combinations
-
-**💰 Cheapest - Free**
-```yaml
-data_warehouse: duckdb_local
-semantic_layer: cube_oss  # or metabase, superset
-```
-
-**⚡ Fastest Development**
-```yaml
-data_warehouse: duckdb_local
-semantic_layer: metabase
-```
-
-**☁️ Managed Cloud**
-```yaml
-data_warehouse: motherduck
-semantic_layer: cube_cloud
-```
-
-**🏢 Enterprise**
-```yaml
-data_warehouse: snowflake
-semantic_layer: looker
-```
-
-**🚀 GCP-Native**
-```yaml
-data_warehouse: bigquery
-semantic_layer: superset
-```
-
-### Project Structure
+## Project Structure (generated)
 
 ```
 my-project/
-  ├── Pipeline-Casts/          # Data extraction & quality
-  ├── Orchestration/      # Prefect workflows
-  ├── Semantic-Cubes/     # BI model definitions
-  ├── Visualization/      # Dashboards & reports
-  ├── Documentation/              # Architecture & guides
-  ├── metricforge.yaml           # Project configuration
-  ├── requirements.txt           # Python dependencies
-  └── .dockerignore             # Docker exclusions
+├── Orchestration/          # Prefect flow + trigger
+├── Pipeline-Casts/         # DLT extract + SQLMesh transform per area
+├── Semantic-Cubes/         # Cube.js YAML definitions
+├── Visualization/          # Evidence dashboards + sources
+├── .github/workflows/      # CI/CD pipeline
+├── metricforge.yaml        # project config
+├── docker-compose.yml      # container services
+├── .env.example            # credential template
+└── README.md               # generated docs
 ```
 
-### Managing Credentials
+## Credentials
 
-#### Option 1: Environment Variables (Recommended)
+Always use environment variables — never put secrets in `metricforge.yaml`.
 
 ```bash
-export MD_TOKEN="your_motherduck_token"
-export CUBE_CLOUD_TOKEN="your_cube_token"
-export SNOWFLAKE_PASSWORD="your_password"
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
+# Copy template and fill in
+cp .env.example .env
+
+# Or export directly
+export MD_TOKEN="..."
+export SNOWFLAKE_PASSWORD="..."
+export CUBE_CLOUD_TOKEN="..."
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/creds.json"
 ```
 
-#### Option 2: .env File
+## Run
 
 ```bash
-cat > .env << EOF
-MD_TOKEN=your_motherduck_token
-CUBE_CLOUD_TOKEN=your_cube_token
-SNOWFLAKE_PASSWORD=your_password
-EOF
-
-# Load it
-set -a
-source .env
-set +a
+cd my-project
+cp .env.example .env              # edit with real values
+docker compose up -d              # start services
+python Orchestration/Support-Main.py   # run pipeline
 ```
 
-#### Option 3: metricforge.yaml (Insecure - Don't!)
+## Default Ports
 
-```bash
-# Never put secrets in metricforge.yaml!
-# Always add metricforge.yaml to .gitignore
-echo "metricforge.yaml" >> .gitignore
-```
+| Service | Port |
+|---------|------|
+| Cube Playground | 4000 |
+| Cube SQL API | 15432 |
+| Evidence dashboards | 3000 |
+| Metabase | 3000 |
+| Superset | 8088 |
 
-### Common Commands
+## Links
 
-```bash
-# Run pipeline
-python Orchestration/main.py
-
-# Start semantic layer services
-docker compose up -d
-
-# Check data warehouse connection
-python -c "from metricforge.utils import MetricForgeConfig; \
-config = MetricForgeConfig(); \
-print(config.get_data_warehouse_provider().validate_connection())"
-
-# View generated structure
-tree -L 2
-
-# Edit configuration
-nano metricforge.yaml
-
-# Stop services
-docker compose down
-```
-
-### After Project Creation
-
-1. **Edit metricforge.yaml** - Add your credentials
-2. **Set environment variables** - For sensitive data
-3. **docker compose up** - Start services (if using Docker-based)
-4. **python Orchestration/main.py** - Run pipeline
-5. **Visit UI** - Access semantic layer dashboard
-
-### Semantic Layer URLs (Default Ports)
-
-- **Cube OSS**: http://localhost:4000
-- **Metabase**: http://localhost:3000
-- **Superset**: http://localhost:8088
-- **Cube SQL API**: localhost:15432 (Postgres compatible)
-
-### Quick Troubleshooting
-
-**Port already in use**
-```bash
-lsof -i :4000  # Find what's using port
-kill -9 <PID>  # Kill the process
-# Or change port in metricforge.yaml
-```
-
-**Docker not running**
-```bash
-docker ps  # Check if Docker daemon is running
-docker compose up -d  # Start services
-```
-
-**Connection failed**
-```bash
-# Verify credentials
-cat metricforge.yaml | grep -A5 "data_warehouse"
-
-# Test connection
-python -c "from metricforge.utils import MetricForgeConfig; \
-MetricForgeConfig().get_data_warehouse_provider().validate_connection()"
-```
-
-**Module not found**
-```bash
-pip install -r requirements.txt
-# Or for specific provider:
-pip install duckdb  # For DuckDB
-pip install snowflake-connector-python  # For Snowflake
-pip install google-cloud-bigquery  # For BigQuery
-```
-
-### Documentation Links
-
-- 📖 [Installation Guide](INSTALL.md)
-- ⚙️ [Configuration Reference](docs/CONFIGURATION.md)
-- 🔧 [Provider Development](docs/PROVIDER_DEVELOPMENT.md)
-- 💡 [Examples](examples/)
-- 🤝 [Contributing](CONTRIBUTING.md)
-
-### Support
-
-- **Issues**: https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/issues
-- **Discussions**: https://github.com/MetricForge-Analytics-Inc/MetricForge-Crucible/discussions
+- [Installation](INSTALL.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Provider Development](docs/PROVIDER_DEVELOPMENT.md)
+- [Examples](examples/)
+- [Contributing](CONTRIBUTING.md)
 - **Docs**: Full documentation in `docs/` directory
 
 ### File Structure of Generated Project

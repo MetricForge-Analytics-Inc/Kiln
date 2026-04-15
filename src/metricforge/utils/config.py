@@ -182,7 +182,6 @@ def _get_default_sl_config(sl_type: str) -> Dict[str, Any]:
         'cube_oss': {
             'port': 4000,
             'sql_port': 15432,
-            'api_secret': 'CHANGE_ME',
         },
         'cube_cloud': {
             'api_endpoint': 'https://api.cubecloudapp.com',
@@ -194,7 +193,6 @@ def _get_default_sl_config(sl_type: str) -> Dict[str, Any]:
         'superset': {
             'port': 8088,
             'admin_username': 'admin',
-            'admin_password': 'admin',
         },
     }
     return defaults.get(sl_type, {})

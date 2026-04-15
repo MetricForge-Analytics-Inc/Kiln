@@ -20,8 +20,8 @@ semantic_layer:
   config:
     port: 8088
     admin_username: admin
-    admin_password: CHANGE_ME  # Change this!
-    secret_key: CHANGE_ME  # Change this!
+    # admin_password: set SUPERSET_ADMIN_PASSWORD env var
+    # secret_key: set SUPERSET_SECRET_KEY env var
 
 include_docker: true
 include_tests: true

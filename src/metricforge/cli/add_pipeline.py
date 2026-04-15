@@ -5,8 +5,9 @@ import click
 from pathlib import Path
 from metricforge.utils.config import MetricForgeConfig
 from metricforge.utils.template_engine import (
-    build_context, render_template, _CRUCIBLE_PIPELINES,
+    render_template, _CRUCIBLE_PIPELINES,
     _replace_foundry_refs, _parameterize_dlt_destination,
+    context_from_project_config,
 )
 from metricforge.cli.initialize import _find_crucible
 
@@ -71,17 +72,7 @@ def add_pipeline(area: str, software: str, path: str, crucible: str | None) -> N
         _parameterize_dlt_destination(project_path, dw_type)
 
     # Re-render orchestration script with updated pipeline list
-    full_config = cfg.to_dict()
-    context = build_context({
-        'project_name': full_config.get('project_name', 'metricforge-project'),
-        'organization': full_config.get('organization', ''),
-        'data_warehouse_type': full_config.get('data_warehouse', {}).get('type', 'duckdb_local'),
-        'semantic_layer_type': full_config.get('semantic_layer', {}).get('type', 'cube_oss'),
-        'include_docker': full_config.get('include_docker', True),
-        'include_tests': full_config.get('include_tests', True),
-        'include_cicd': full_config.get('include_cicd', True),
-        'pipelines': full_config.get('pipelines', {}),
-    })
+    context = context_from_project_config(cfg.to_dict())
 
     orch_content = render_template('Orchestration/Support-Main.py.j2', context)
     orch_path = project_path / 'Orchestration' / 'Support-Main.py'

@@ -59,8 +59,10 @@ _CRUCIBLE_STATIC: List[Tuple[str, str]] = [
     ("Visualization/pages", "Visualization/pages"),
     ("Visualization/sources", "Visualization/sources"),
     ("Visualization/components", "Visualization/components"),
-    # Semantic Cubes (static cubes — the first one has a .j2 override)
+    # Semantic Cubes (all copied from Crucible; _replace_foundry_refs handles parameterization)
     ("Semantic-Cubes/model/cube.py", "Semantic-Cubes/model/cube.py"),
+    ("Semantic-Cubes/model/cubes/1_tickets_case_created_time.yaml",
+     "Semantic-Cubes/model/cubes/1_tickets_case_created_time.yaml"),
     ("Semantic-Cubes/model/cubes/2_tickets_case_response_time.yaml",
      "Semantic-Cubes/model/cubes/2_tickets_case_response_time.yaml"),
     ("Semantic-Cubes/model/cubes/3_tickets_case_reassigned_time.yaml",
@@ -102,6 +104,8 @@ def _make_env() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
+
+_JINJA_ENV = _make_env()
 
 
 def build_context(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -146,9 +150,27 @@ def build_context(config: Dict[str, Any]) -> Dict[str, Any]:
 
 def render_template(template_path: str, context: Dict[str, Any]) -> str:
     """Render a single .j2 template and return the string content."""
-    env = _make_env()
-    tmpl = env.get_template(template_path)
+    tmpl = _JINJA_ENV.get_template(template_path)
     return tmpl.render(**context)
+
+
+def context_from_project_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Build template context from a saved metricforge.yaml config dict.
+
+    This is the single translation point from the on-disk config format
+    (nested ``data_warehouse.type``, ``semantic_layer.type``, etc.) to the
+    flat dict that :func:`build_context` expects.
+    """
+    return build_context({
+        "project_name": config_dict.get("project_name", "metricforge-project"),
+        "organization": config_dict.get("organization", ""),
+        "data_warehouse_type": config_dict.get("data_warehouse", {}).get("type", "duckdb_local"),
+        "semantic_layer_type": config_dict.get("semantic_layer", {}).get("type", "cube_oss"),
+        "include_docker": config_dict.get("include_docker", True),
+        "include_tests": config_dict.get("include_tests", True),
+        "include_cicd": config_dict.get("include_cicd", True),
+        "pipelines": config_dict.get("pipelines", {}),
+    })
 
 
 def scaffold_project(
@@ -162,14 +184,12 @@ def scaffold_project(
     2. Copy static files from the Crucible repo.
     3. Copy pipeline-specific dirs based on selected areas/vendors.
     """
-    env = _make_env()
-
     # ── Step 1: Render .j2 templates from Kiln ───────────────────
     for j2_file in TEMPLATES_DIR.rglob("*.j2"):
         rel = j2_file.relative_to(TEMPLATES_DIR)
         dest_rel = Path(*rel.parts).with_suffix("")  # strip .j2
 
-        tmpl = env.get_template(rel.as_posix())
+        tmpl = _JINJA_ENV.get_template(rel.as_posix())
         content = tmpl.render(**context)
         dest = output_dir / dest_rel
         dest.parent.mkdir(parents=True, exist_ok=True)

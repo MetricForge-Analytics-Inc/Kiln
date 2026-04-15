@@ -17,14 +17,6 @@ class ConnectionConfig:
     provider_type: str
     name: str
     config: Dict[str, Any]
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "provider_type": self.provider_type,
-            "name": self.name,
-            **self.config
-        }
 
 
 class DataWarehouseProvider(ABC):
@@ -74,18 +66,6 @@ class DataWarehouseProvider(ABC):
         Returns None if this provider doesn't need a local service.
         """
         pass
-    
-    def render_config_template(self, template_path: str) -> str:
-        """
-        Render a configuration template with provider-specific values.
-        
-        Args:
-            template_path: Path to template file
-            
-        Returns:
-            Rendered configuration content
-        """
-        raise NotImplementedError("Override in subclass if needed")
 
 
 class SemanticLayerProvider(ABC):
@@ -133,7 +113,3 @@ class SemanticLayerProvider(ABC):
     def get_api_endpoints(self) -> Dict[str, str]:
         """Get API endpoints for the semantic layer."""
         pass
-    
-    def render_semantic_model_template(self, template_path: str) -> str:
-        """Render a semantic model template for this provider."""
-        raise NotImplementedError("Override in subclass if needed")

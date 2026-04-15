@@ -16,14 +16,14 @@ class CubeOSSProvider(SemanticLayerProvider):
     Configuration:
         port: Port for Playground UI (default: 4000)
         sql_port: Port for SQL API (default: 15432)
-        api_secret: API secret (default: 'CHANGE_ME')
+        api_secret: API secret (set via config or CUBEJS_API_SECRET env var)
     """
     
     def __init__(self, config: ConnectionConfig, dw_provider: DataWarehouseProvider):
         super().__init__(config, dw_provider)
         self.port = config.config.get('port', 4000)
         self.sql_port = config.config.get('sql_port', 15432)
-        self.api_secret = config.config.get('api_secret', 'CHANGE_ME')
+        self.api_secret = config.config.get('api_secret') or os.getenv('CUBEJS_API_SECRET', '')
         self.image = config.config.get('image', 'cubejs/cube:v1.3')
     
     def validate_connection(self) -> bool:
@@ -259,7 +259,7 @@ class MetabaseProvider(SemanticLayerProvider):
     def __init__(self, config: ConnectionConfig, dw_provider: DataWarehouseProvider):
         super().__init__(config, dw_provider)
         self.port = config.config.get('port', 3000)
-        self.database_url = config.config.get('database_url', 'postgres://metabase:password@postgres:5432/metabase')
+        self.database_url = config.config.get('database_url', '')
         self.admin_email = config.config.get('admin_email', 'admin@metricforge.local')
         self.admin_password = config.config.get('admin_password')
         self.image = config.config.get('image', 'metabase/metabase:latest')
@@ -280,7 +280,7 @@ class MetabaseProvider(SemanticLayerProvider):
             "MB_DB_TYPE": "postgres",
             "MB_DB_CONNECTION_POOL_SIZE": "15",
             "MB_ADMIN_EMAIL": self.admin_email,
-            "MB_ADMIN_PASSWORD": self.admin_password or "changeme",
+            "MB_ADMIN_PASSWORD": self.admin_password or "",
         }
     
     def get_docker_compose_service(self) -> Optional[Dict[str, Any]]:
@@ -312,7 +312,7 @@ class MetabaseProvider(SemanticLayerProvider):
                     "MB_DB_USER": "metabase",
                     "MB_DB_PASS": "password",
                     "MB_ADMIN_EMAIL": self.admin_email,
-                    "MB_ADMIN_PASSWORD": self.admin_password or "changeme",
+                    "MB_ADMIN_PASSWORD": self.admin_password or "",
                 },
                 "depends_on": {
                     "postgres": {"condition": "service_healthy"},
@@ -350,8 +350,8 @@ class SupersetProvider(SemanticLayerProvider):
         super().__init__(config, dw_provider)
         self.port = config.config.get('port', 8088)
         self.admin_username = config.config.get('admin_username', 'admin')
-        self.admin_password = config.config.get('admin_password', 'admin')
-        self.secret_key = config.config.get('secret_key', 'CHANGE_ME')
+        self.admin_password = config.config.get('admin_password') or os.getenv('SUPERSET_ADMIN_PASSWORD', '')
+        self.secret_key = config.config.get('secret_key') or os.getenv('SUPERSET_SECRET_KEY', '')
         self.image = config.config.get('image', 'apache/superset:latest')
     
     def validate_connection(self) -> bool:

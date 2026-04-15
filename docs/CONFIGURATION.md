@@ -183,7 +183,7 @@ semantic_layer:
   config:
     port: 4000
     sql_port: 15432
-    api_secret: CHANGE_ME
+    # api_secret: auto-generated at scaffold time, or set CUBEJS_API_SECRET env var
     image: cubejs/cube:v1.3  # Optional: specify version
 ```
 
@@ -289,8 +289,7 @@ semantic_layer:
   config:
     port: 3000
     admin_email: admin@metricforge.local
-    admin_password: CHANGE_ME
-    database_url: postgres://user:pass@postgres:5432/metabase
+    # admin_password: set via MB_ADMIN_PASSWORD env var
 ```
 
 **Pros:**
@@ -316,8 +315,8 @@ semantic_layer:
   config:
     port: 8088
     admin_username: admin
-    admin_password: CHANGE_ME
-    secret_key: CHANGE_ME
+    # admin_password: set via SUPERSET_ADMIN_PASSWORD env var
+    # secret_key: set via SUPERSET_SECRET_KEY env var
 ```
 
 **Pros:**
