@@ -6,6 +6,7 @@ from pathlib import Path
 from metricforge.utils.config import MetricForgeConfig
 from metricforge.utils.template_engine import (
     build_context, render_template, _CRUCIBLE_PIPELINES,
+    _replace_foundry_refs, _parameterize_dlt_destination,
 )
 from metricforge.cli.initialize import _find_crucible
 
@@ -59,6 +60,15 @@ def add_pipeline(area: str, software: str, path: str, crucible: str | None) -> N
     pipeline_dir = project_path / 'Pipeline-Casts' / area_title / software
     (pipeline_dir / 'Data-Extract').mkdir(parents=True, exist_ok=True)
     (pipeline_dir / 'Data-Pipeline').mkdir(parents=True, exist_ok=True)
+
+    # Parameterize copied files: replace Foundry. refs and DLT destinations
+    full_config = cfg.to_dict()
+    project_slug = full_config.get('project_name', '').lower().replace(' ', '_').replace('-', '_')
+    if project_slug:
+        _replace_foundry_refs(project_path, project_slug)
+    dw_type = full_config.get('data_warehouse', {}).get('type', '')
+    if dw_type:
+        _parameterize_dlt_destination(project_path, dw_type)
 
     # Re-render orchestration script with updated pipeline list
     full_config = cfg.to_dict()

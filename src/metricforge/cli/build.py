@@ -9,8 +9,7 @@ from pathlib import Path
 @click.option('--path', default='.', help='Project root directory')
 @click.option('--service', type=click.Choice(['all', 'orchestration', 'visualization']),
               default='all', help='Which service to build')
-@click.option('--tag', default='latest', help='Image tag')
-def build(path: str, service: str, tag: str) -> None:
+def build(path: str, service: str) -> None:
     """Build Docker images for the project."""
 
     project_path = Path(path)

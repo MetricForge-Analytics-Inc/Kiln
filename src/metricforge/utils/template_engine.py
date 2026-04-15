@@ -9,6 +9,7 @@ straight from the Crucible repo at scaffold time.
 
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+import secrets
 import shutil
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -138,6 +139,7 @@ def build_context(config: Dict[str, Any]) -> Dict[str, Any]:
         "has_support": support_software is not None,
         "has_sales": sales_software is not None,
         "evidence_datasource": _EVIDENCE_DATASOURCE.get(dw_type, "@evidence-dev/duckdb"),
+        "cube_api_secret": secrets.token_urlsafe(32),
         "kiln_version": _get_kiln_version(),
     }
 

@@ -42,8 +42,8 @@ def _find_crucible(hint: str | None) -> Path:
         if p.is_dir():
             return p
 
-    # Convention: Kiln and Crucible sit side-by-side
-    kiln_root = Path(__file__).resolve().parent.parent.parent.parent.parent  # src/metricforge/cli → Kiln root
+    # Convention: Kiln and Crucible sit side-by-side under the same parent
+    kiln_root = Path(__file__).resolve().parent.parent.parent.parent  # → .../Kiln/src/metricforge/cli/ → .../Kiln/
     sibling = kiln_root.parent / "Crucible"
     if sibling.is_dir():
         return sibling

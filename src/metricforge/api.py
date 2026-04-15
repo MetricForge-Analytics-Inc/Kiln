@@ -11,12 +11,14 @@ Or:
     metricforge serve --port 8000
 """
 
+import logging
+import re
 import shutil
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from metricforge.utils.template_engine import (
@@ -24,6 +26,8 @@ from metricforge.utils.template_engine import (
     scaffold_project,
     DW_TYPE_MAP,
     SL_TYPE_MAP,
+    _replace_foundry_refs,
+    _parameterize_dlt_destination,
 )
 from metricforge.utils.project_setup import ProjectInitializer
 
@@ -38,6 +42,10 @@ app = FastAPI(
 # These can be overridden with env vars or a config file
 CRUCIBLE_PATH: Path | None = None
 OUTPUT_ROOT: Path = Path("/var/metricforge/projects")
+
+_PROJECT_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_crucible() -> Path:
@@ -67,6 +75,18 @@ def _resolve_output_root() -> Path:
     if env:
         return Path(env)
     return OUTPUT_ROOT
+
+
+def _safe_project_path(project_name: str) -> Path:
+    """Validate project_name and return a safe path under OUTPUT_ROOT."""
+    if not _PROJECT_NAME_RE.match(project_name) or len(project_name) > 100:
+        raise HTTPException(status_code=400, detail="Invalid project name")
+    output_root = _resolve_output_root()
+    project_path = (output_root / project_name).resolve()
+    # Ensure resolved path is still under output root
+    if not str(project_path).startswith(str(output_root.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid project name")
+    return project_path
 
 
 # ── Request / Response models ─────────────────────────────────────
@@ -108,8 +128,8 @@ class ProjectStatusResponse(BaseModel):
 class AddPipelineRequest(BaseModel):
     """Request body for adding a pipeline."""
 
-    area: str = Field(..., description="support | sales")
-    software: str = Field(..., description="zendesk | salesforce")
+    area: Literal["support", "sales"] = Field(..., description="support | sales")
+    software: Literal["zendesk", "salesforce"] = Field(..., description="zendesk | salesforce")
 
 
 class UpgradeResponse(BaseModel):
@@ -161,7 +181,7 @@ def create_project(req: ProjectCreateRequest):
     output_root = _resolve_output_root()
 
     project_id = str(uuid.uuid4())[:8]
-    project_path = output_root / req.project_name
+    project_path = _safe_project_path(req.project_name)
 
     if project_path.exists():
         raise HTTPException(
@@ -201,7 +221,8 @@ def create_project(req: ProjectCreateRequest):
         # Clean up on failure
         if project_path.exists():
             shutil.rmtree(project_path)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to create project %s", req.project_name)
+        raise HTTPException(status_code=500, detail="Project creation failed")
 
     return ProjectCreateResponse(
         project_id=project_id,
@@ -214,8 +235,7 @@ def create_project(req: ProjectCreateRequest):
 @app.get("/projects/{project_name}", response_model=ProjectStatusResponse)
 def get_project_status(project_name: str):
     """Check the status of an existing project."""
-    output_root = _resolve_output_root()
-    project_path = output_root / project_name
+    project_path = _safe_project_path(project_name)
 
     return ProjectStatusResponse(
         project_id="",
@@ -230,8 +250,7 @@ def get_project_status(project_name: str):
 def add_pipeline(project_name: str, req: AddPipelineRequest):
     """Add a pipeline to an existing project."""
     crucible_path = _resolve_crucible()
-    output_root = _resolve_output_root()
-    project_path = output_root / project_name
+    project_path = _safe_project_path(project_name)
 
     if not (project_path / "metricforge.yaml").exists():
         raise HTTPException(status_code=404, detail="Project not found or not initialized")
@@ -261,8 +280,16 @@ def add_pipeline(project_name: str, req: AddPipelineRequest):
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
 
-    # Re-render orchestration
+    # Parameterize copied files
     full_config = cfg.to_dict()
+    project_slug = full_config.get("project_name", "").lower().replace(" ", "_").replace("-", "_")
+    if project_slug:
+        _replace_foundry_refs(project_path, project_slug)
+    dw_type = full_config.get("data_warehouse", {}).get("type", "")
+    if dw_type:
+        _parameterize_dlt_destination(project_path, dw_type)
+
+    # Re-render orchestration
     context = build_context({
         "project_name": full_config.get("project_name", "metricforge-project"),
         "organization": full_config.get("organization", ""),
@@ -285,8 +312,7 @@ def add_pipeline(project_name: str, req: AddPipelineRequest):
 def upgrade_project(project_name: str):
     """Upgrade a project to the latest Crucible version."""
     crucible_path = _resolve_crucible()
-    output_root = _resolve_output_root()
-    project_path = output_root / project_name
+    project_path = _safe_project_path(project_name)
 
     config_file = project_path / "metricforge.yaml"
     if not config_file.exists():
@@ -338,8 +364,7 @@ def upgrade_project(project_name: str):
 @app.delete("/projects/{project_name}")
 def delete_project(project_name: str):
     """Delete a project (destructive)."""
-    output_root = _resolve_output_root()
-    project_path = output_root / project_name
+    project_path = _safe_project_path(project_name)
 
     if not project_path.exists():
         raise HTTPException(status_code=404, detail="Project not found")
